@@ -184,8 +184,8 @@ class SourceTree(Gtk.VBox):
                 node_iter = self._get_tag_iter(tag, None)
                 new_iter = self._store.append(node_iter, (pixbuf, tag.name, tag.kind.name, tag.file_uri(), tag.fields['line'], markup))
             else:
-                tag.fields['level'] = tag.fields['parent'].count('.') + 1
-                tag_class_table[('%s.%s' % (tag.fields['parent'], tag.name))] = tag
+                tag.fields['level'] = tag.fields['parent'].count('<<') + 1
+                tag_class_table[('%s<<%s' % (tag.fields['parent'], tag.name))] = tag
 
         # level 1
         for tag in tags:

@@ -23,7 +23,7 @@
 #
 # where extension fields are:
 #
-#   kind:kind_name<TAB>line:line_number<TAB>language:source_language<TAB>class:path.to.parent
+#   kind:kind_name<TAB>line:line_number<TAB>language:source_language<TAB>class:path<<to<<parent
 
 if ARGV[0] == '--version'
   puts %x(ctags --version)
@@ -72,7 +72,6 @@ if defined? Asciidoctor
     else
       next
     end
-    lead = level == 0 ? '#' : ['.'] * level * ' '
     title = sanitize s.title
     child = (level == 0 && s == s.document.header ? s.document : s)
     parent_title = nil
@@ -84,7 +83,7 @@ if defined? Asciidoctor
         sanitize parent.title
       end
       break if ptitle == nil
-      parent_title = parent_title == nil ? ptitle : %(#{ptitle}.#{parent_title})
+      parent_title = parent_title == nil ? ptitle : %(#{ptitle}<<#{parent_title})
       child = parent
     end
     parent_title = %(parent:#{parent_title}) unless parent_title.nil?
