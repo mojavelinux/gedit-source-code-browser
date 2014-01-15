@@ -56,21 +56,7 @@ if defined? Asciidoctor
   end
 
   doc = Asciidoctor.load_file source_file, safe: :safe
-  # flat approach (hierarchy represented in the text)
-  #result = doc.map_sections {|s|
-  #  lead = s.level == 0 ? '#' : ['.'] * s.level * ' '
-  #  title = s.context == :document ? s.doctitle : s.title
-  #  title = title.gsub(/<[^>]+>/, '').tr_s(' ', ' ').strip
-  #  [
-  #    %(#{lead} #{title}),
-  #    s.pos[:file],
-  #    %(#{lineno = s.pos[:lineno]};"),
-  #    'kind:section',
-  #    %(line:#{lineno}),
-  #    'language:asciidoc'
-  #  ] * "\t"
-  #} * "\n"
-  result = doc.map_sections {|s|
+  result = doc.find_by(:section).map {|s|
     context = s.context
     doctype = s.document.doctype
     level = s.level
@@ -87,22 +73,27 @@ if defined? Asciidoctor
       next
     end
     lead = level == 0 ? '#' : ['.'] * level * ' '
-    title = sanitize(context == :document ? s.doctitle : s.title)
-    child = s
+    title = sanitize s.title
+    child = (level == 0 && s == s.document.header ? s.document : s)
     parent_title = nil
-    # NOTE special handling for multi-part book
+    # NOTE special layout for multi-part book
     while ((parent = child.parent) != nil && (doctype != 'book' || parent.context != :document))
-      ptitle = sanitize(parent.context == :document ? parent.doctitle : parent.title)
+      ptitle = if parent.context == :document
+        parent.header? ? sanitize(parent.header.title) : nil
+      else
+        sanitize parent.title
+      end
+      break if ptitle == nil
       parent_title = parent_title == nil ? ptitle : %(#{ptitle}.#{parent_title})
       child = parent
     end
     parent_title = %(parent:#{parent_title}) unless parent_title.nil?
     [
       title,
-      s.pos[:file],
-      %(#{lineno = s.pos[:lineno]};"),
+      s.filename,
+      %(#{s.lineno};"),
       kind,
-      %(line:#{lineno}),
+      %(line:#{s.lineno}),
       'language:asciidoc',
       parent_title
     ].compact * "\t"
