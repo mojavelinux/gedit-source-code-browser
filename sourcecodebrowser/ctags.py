@@ -23,9 +23,17 @@ class Tag(object):
     def __init__(self, name):
         self.name = name
         self.file = None
+        self.file = None
         self.ex_command = None
         self.kind = None
         self.fields = {}
+
+    def file_uri(self):
+        file = self.file
+        if file and file.startswith('/'):
+            return 'file://%s' % (file)
+        else:
+            return file
 
 class Kind(object):
     """
@@ -132,7 +140,6 @@ class Parser(object):
                         if not p in node:
                             node[p] = {'tag':None, 'children':{}}
                         node = node[p]
-                    print node
                     node['tag'] = tag                        
                 else:
                     if not parent in self.tree:

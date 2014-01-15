@@ -4,6 +4,7 @@ Gedit Source Code Browser
 A source code class and function browser plugin for Gedit 3. 
 
 * Author: Micah Carrick
+* Author: Dan Allen (added AsciiDoc outline support)
 
 This plugin will add a new tab to the side pane in the Gedit text editor which
 shows symbols (functions, classes, variables, etc.) for the active document. 
@@ -13,6 +14,8 @@ defined.
 See the [ctags supported languages](http://ctags.sourceforge.net/languages.html)
 for a list of the 41 programming languages supported by this plugin.
 
+For AsciiDoc files, the plugin uses Asciidoctor to create an outline of the
+section headings down to level 3 (H4).
 
 Requirements
 ------------

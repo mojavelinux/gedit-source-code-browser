@@ -8,6 +8,7 @@ from gi.repository import GObject, GdkPixbuf, Gedit, Gtk, PeasGtk, Gio
 logging.basicConfig()
 LOG_LEVEL = logging.WARN
 SETTINGS_SCHEMA = "org.gnome.gedit.plugins.sourcecodebrowser"
+BIN_DIR = os.path.join(os.path.dirname(__file__), 'bin')
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 ICON_DIR = os.path.join(DATA_DIR, 'icons', '16x16')
  
@@ -32,7 +33,7 @@ class SourceTree(Gtk.VBox):
         
         # preferences (should be set by plugin)
         self.show_line_numbers = True
-        self.ctags_executable = 'ctags'
+        self.ctags_executable = os.path.join(BIN_DIR, 'ctags-wrapper') 
         self.expand_rows = True
         self.sort_list = True
         self.create_ui()
@@ -140,6 +141,115 @@ class SourceTree(Gtk.VBox):
         applicable.
         """
         self._current_uri = uri
+
+        if uri.endswith('.adoc') or uri.endswith('.asciidoc'):
+            self._build_outline(kinds, tags, uri)
+        else:
+            self._build_index(kinds, tags, uri)
+        
+        # expand
+        if uri in self.expanded_rows:
+            for strpath in self.expanded_rows[uri]:
+                path = Gtk.TreePath.new_from_string(strpath)
+                if path:
+                    self._treeview.expand_row(path, False)
+        elif uri not in self.expanded_rows and self.expand_rows:
+            self._treeview.expand_all()
+            """
+            curiter = self._store.get_iter_first()
+            while curiter:
+                path = self._store.get_path(curiter)
+                self._treeview.expand_row(path, False)
+                curiter = self._store.iter_next(iter)
+            """
+
+    # TODO turn this into the recusive call to build the outline levels!!
+    #def _build_outline_level(self, kinds, tags, uri, level = 0):
+
+    def _build_outline(self, kinds, tags, uri):
+        tag_class_table = {}
+        # level 0, build symbols table
+        for tag in tags:
+            if 'parent' not in tag.fields:
+                tag.fields['level'] = 0
+                tag_class_table[tag.name] = tag
+                pixbuf = self.get_pixbuf(tag.kind.icon_name())
+                if 'line' in tag.fields and self.show_line_numbers:
+                    if uri == tag.file_uri():
+                        markup = '%s <i>(line %s)</i>' % (tag.name, tag.fields['line'])
+                    else:
+                        markup = '%s <i>(%s, line %s)</i>' % (tag.name, os.path.basename(tag.file), tag.fields['line'])
+                else:
+                    markup = tag.name
+                node_iter = self._get_tag_iter(tag, None)
+                new_iter = self._store.append(node_iter, (pixbuf, tag.name, tag.kind.name, tag.file_uri(), tag.fields['line'], markup))
+            else:
+                tag.fields['level'] = tag.fields['parent'].count('.') + 1
+                tag_class_table[('%s.%s' % (tag.fields['parent'], tag.name))] = tag
+
+        # level 1
+        for tag in tags:
+            if tag.fields['level'] == 1:
+                pixbuf = self.get_pixbuf(tag.kind.icon_name())
+                if 'line' in tag.fields and self.show_line_numbers:
+                    if uri == tag.file_uri():
+                        markup = '%s <i>(line %s)</i>' % (tag.name, tag.fields['line'])
+                    else:
+                        markup = '%s <i>(%s, line %s)</i>' % (tag.name, os.path.basename(tag.file), tag.fields['line'])
+                else:
+                    markup = tag.name
+                p_tag = tag_class_table.get(tag.fields['parent'])
+                node_iter = self._get_tag_iter(p_tag if p_tag else tag, None)
+                new_iter = self._store.append(node_iter, (pixbuf, tag.name, tag.kind.name, tag.file_uri(), tag.fields['line'], markup))
+
+        # level 2
+        for tag in tags:
+            if tag.fields['level'] == 2:
+                pixbuf = self.get_pixbuf(tag.kind.icon_name())
+                if 'line' in tag.fields and self.show_line_numbers:
+                    if uri == tag.file_uri():
+                        markup = '%s <i>(line %s)</i>' % (tag.name, tag.fields['line'])
+                    else:
+                        markup = '%s <i>(%s, line %s)</i>' % (tag.name, os.path.basename(tag.file), tag.fields['line'])
+                else:
+                    markup = tag.name
+
+                p_tag = tag_class_table.get(tag.fields['parent'])
+                gp_tag = None
+                if p_tag:
+                    gp_tag = tag_class_table.get(p_tag.fields['parent'])
+                    gp_tag_iter = None
+                    if gp_tag:
+                        gp_tag_iter = self._get_tag_iter(gp_tag, None)
+                    node_iter = self._get_tag_iter(p_tag, gp_tag_iter)
+                    new_iter = self._store.append(node_iter, (pixbuf, tag.name, tag.kind.name, tag.file_uri(), tag.fields['line'], markup))
+
+        # level 3
+        for tag in tags:
+            if tag.fields['level'] == 3:
+                pixbuf = self.get_pixbuf(tag.kind.icon_name())
+                if 'line' in tag.fields and self.show_line_numbers:
+                    if uri == tag.file_uri():
+                        markup = '%s <i>(line %s)</i>' % (tag.name, tag.fields['line'])
+                    else:
+                        markup = '%s <i>(%s, line %s)</i>' % (tag.name, os.path.basename(tag.file), tag.fields['line'])
+                else:
+                    markup = tag.name
+
+                p_tag = tag_class_table.get(tag.fields['parent'])
+                if p_tag:
+                    gp_tag = tag_class_table.get(p_tag.fields['parent'])
+                    gp_tag_iter = None
+                    if gp_tag:
+                        ggp_tag = tag_class_table.get(gp_tag.fields['parent'])
+                        ggp_tag_iter = None
+                        if ggp_tag:
+                            ggp_tag_iter = self._get_tag_iter(ggp_tag, None)
+                        gp_tag_iter = self._get_tag_iter(gp_tag, ggp_tag_iter)
+                    node_iter = self._get_tag_iter(p_tag, gp_tag_iter)
+                    new_iter = self._store.append(node_iter, (pixbuf, tag.name, tag.kind.name, tag.file_uri(), tag.fields['line'], markup))
+
+    def _build_index(self, kinds, tags, uri):
         # load root-level tags first
         for i, tag in enumerate(tags):
             if "class" not in tag.fields: 
@@ -183,22 +293,6 @@ class SourceTree(Gtk.VBox):
         # sort         
         if self.sort_list:                               
             self._store.set_sort_column_id(1, Gtk.SortType.ASCENDING)
-        
-        # expand
-        if uri in self.expanded_rows:
-            for strpath in self.expanded_rows[uri]:
-                path = Gtk.TreePath.new_from_string(strpath)
-                if path:
-                    self._treeview.expand_row(path, False)
-        elif uri not in self.expanded_rows and self.expand_rows:
-            self._treeview.expand_all()
-            """
-            curiter = self._store.get_iter_first()
-            while curiter:
-                path = self._store.get_path(curiter)
-                self._treeview.expand_row(path, False)
-                curiter = self._store.iter_next(iter)
-            """
 
     def on_row_activated(self, treeview, path, column, data=None):
         """
@@ -219,7 +313,7 @@ class SourceTree(Gtk.VBox):
         Gedit. They would be different for remote files.
         """
         command = "ctags -nu --fields=fiKlmnsSzt -f - '%s'" % path
-        #self._log.debug(command)
+        self._log.debug(command)
         try:
             parser = ctags.Parser()
             parser.parse(command, self.ctags_executable)
@@ -228,7 +322,6 @@ class SourceTree(Gtk.VBox):
                            str(e), 
                            self.ctags_executable)
         self.load(parser.kinds, parser.tags, uri)
-    
     
     def _save_expanded_rows(self):
         self.expanded_rows[self._current_uri] = []
@@ -384,9 +477,11 @@ class SourceCodeBrowserPlugin(GObject.Object, Gedit.WindowActivatable, PeasGtk.C
             self.load_remote_files = True
             self.show_line_numbers = False
             self.expand_rows = True
-            self.sort_list = True
-            self.ctags_executable = 'ctags'
-   
+            self.sort_list = False
+            self.ctags_executable = ''
+        if not self.ctags_executable or self.ctags_executable == '':
+            self.ctags_executable = os.path.join(BIN_DIR, 'ctags-wrapper') 
+
     def _load_active_document_symbols(self):
         """ Load the symbols for the given URI. """
         self._sourcetree.clear()
@@ -401,7 +496,7 @@ class SourceCodeBrowserPlugin(GObject.Object, Gedit.WindowActivatable, PeasGtk.C
             location = document.get_location()
             if location:
                 uri = location.get_uri()
-                self._log.debug("Loading %s...", uri)
+                self._log.debug("Loading uri %s...", uri)
                 if uri is not None:
                     if uri[:7] == "file://":
                         # use get_parse_name() to get path in UTF-8
@@ -420,7 +515,36 @@ class SourceCodeBrowserPlugin(GObject.Object, Gedit.WindowActivatable, PeasGtk.C
                         self._sourcetree.parse_file(filename, uri)
                         os.unlink(filename)
                     self._loaded_document = document
-        self._is_loaded = True
+
+                if document not in [obj for obj, hid in self._handlers]:
+                    hid = document.connect("saved", self.on_document_saved)
+                    self._handlers.append((document, hid))
+                self._is_loaded = True
+
+                # Attempt to select the entry in the tag tree for the current focused line
+                # this is used primarly when another file is opened from the tag tree
+                if uri.endswith('.adoc') or uri.endswith('.asciidoc') or uri.endswith('.ad') or uri.endswith('.asc'):
+                    current_line = document.get_iter_at_mark(document.get_insert()).get_line() + 1
+                    store = self._sourcetree._store
+                    tag_iter = store.iter_children(None)
+                    i = 0
+                    while tag_iter:
+                        if int(store.get_value(tag_iter, 4)) == current_line and store.get_value(tag_iter, 3) == uri:
+                            path = '%s' % (i)
+                            self._sourcetree._treeview.get_selection().select_path(path)
+                            break
+                        # FIXME need to do recursion to cover all levels!!!
+                        child_tag_iter = store.iter_children(tag_iter)
+                        j = 0
+                        while child_tag_iter:
+                            if int(store.get_value(child_tag_iter, 4)) == current_line and store.get_value(child_tag_iter, 3) == uri:
+                                path = '%s:%s' % (i, j)
+                                self._sourcetree._treeview.get_selection().select_path(path)
+                                break
+                            j = j + 1
+                            child_tag_iter = store.iter_next(child_tag_iter)
+                        i = i + 1
+                        tag_iter = store.iter_next(tag_iter)
             
     def on_active_tab_changed(self, window, tab, data=None):
         self._load_active_document_symbols()
@@ -455,9 +579,15 @@ class SourceCodeBrowserPlugin(GObject.Object, Gedit.WindowActivatable, PeasGtk.C
         if not self._is_loaded:
             self._load_active_document_symbols()
         return False
+
+    def on_document_saved(self, doc, err):
+        self._load_active_document_symbols()
         
     def on_tab_state_changed(self, window, data=None):
-        self._load_active_document_symbols()
+        # this event gets fired even when the content in the current tab hasn't change
+        # so add a guard here and use other events to load the tree initially
+        if not self._is_loaded:
+            self._load_active_document_symbols()
     
     def on_tab_removed(self, window, tab, data=None):
         if not self.window.get_active_document():
@@ -466,12 +596,18 @@ class SourceCodeBrowserPlugin(GObject.Object, Gedit.WindowActivatable, PeasGtk.C
     def on_tag_activated(self, sourcetree, location, data=None):
         """ Go to the line where the double-clicked symbol is defined. """
         uri, line = location
-        self._log.debug("%s, line %s." % (uri, line))
-        document = self.window.get_active_document()
-        view = self.window.get_active_view()
-        line = int(line) - 1 # lines start from 0
-        document.goto_line(line)
-        view.scroll_to_cursor()
+        self._log.debug("navigating to tag location: %s, line %s" % (uri, line))
+        location = Gio.file_new_for_uri(uri)
+        jump_to = int(line)
+        tab = self.window.get_tab_from_location(location)
+        if tab:
+          self.window.set_active_tab(tab)
+          document = self.window.get_active_document()
+          document.goto_line(jump_to - 1)
+          view = self.window.get_active_view()
+          view.scroll_to_cursor()
+        else:
+          self.window.create_tab_from_location(location, None, jump_to, 0, False, True)
         
     def _version_check(self):
         """ Make sure the exhuberant ctags is installed. """
@@ -479,6 +615,3 @@ class SourceCodeBrowserPlugin(GObject.Object, Gedit.WindowActivatable, PeasGtk.C
         if not self.ctags_version:
             self._log.warn("Could not find ctags executable: %s" % 
                            (self.ctags_executable))
-            
-        
-        

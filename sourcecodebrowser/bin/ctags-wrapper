@@ -1,0 +1,118 @@
+#!/bin/env ruby
+
+# Intercepts the ctags command when the target is an AsciiDoc file in order to
+# leverage Asciidoctor for generating accurate ctag output. Dispatches to the
+# ctags command for all other source languages.
+#
+# This script attempts to load Asciidoctor from the following relative path:
+#
+#   ../data/asciidoctor/lib
+#
+# If the relative path does not exist, the script assumes the asciidoctor
+# RubyGem is on the default LOAD_PATH.
+#
+# Usage:
+#
+#   ctags-wrapper -nu --fields=fiKlmnsSzt -f - 'input.adoc'
+#
+# Notes:
+#
+# ctags data format for Gedit:
+#
+#   tag_name<TAB>file_name<TAB>line_number;"<TAB>extension_fields
+#
+# where extension fields are:
+#
+#   kind:kind_name<TAB>line:line_number<TAB>language:source_language<TAB>class:path.to.parent
+
+if ARGV[0] == '--version'
+  puts %x(ctags --version)
+  exit 0
+end
+
+PRG_NAME = File.basename $0
+DEBUG = false
+
+if not File.exist?(source_file = ARGV.last)
+  warn %(ERROR: #{PRG_NAME}: Source file does not exist: #{source_file})
+  exit 1
+elsif source_file =~ /\.(?:ad(?:oc)?|asc(?:iidoc)?)$/
+  LOCAL_ASCIIDOCTOR_LIB_DIR = File.expand_path(File.join File.dirname(__FILE__), '..', 'data', 'asciidoctor', 'lib')
+  $:.unshift LOCAL_ASCIIDOCTOR_LIB_DIR if Dir.exist? LOCAL_ASCIIDOCTOR_LIB_DIR
+  
+  begin
+    require 'asciidoctor'
+  rescue LoadError
+    warn %(WARNING: #{PRG_NAME}: Failed to load Asciidoctor RubyGem. Delegating to ctags.)
+  end
+end
+
+if defined? Asciidoctor
+  XmlTagPattern = /<[^>]+>/
+  EntityRefPattern = /&#(\d{2,4});/
+
+  def sanitize string
+    string.gsub(XmlTagPattern, '').tr_s(' ', ' ').strip.gsub(EntityRefPattern) { [$1.to_i].pack 'U*' }
+  end
+
+  doc = Asciidoctor.load_file source_file, safe: :safe
+  # flat approach (hierarchy represented in the text)
+  #result = doc.map_sections {|s|
+  #  lead = s.level == 0 ? '#' : ['.'] * s.level * ' '
+  #  title = s.context == :document ? s.doctitle : s.title
+  #  title = title.gsub(/<[^>]+>/, '').tr_s(' ', ' ').strip
+  #  [
+  #    %(#{lead} #{title}),
+  #    s.pos[:file],
+  #    %(#{lineno = s.pos[:lineno]};"),
+  #    'kind:section',
+  #    %(line:#{lineno}),
+  #    'language:asciidoc'
+  #  ] * "\t"
+  #} * "\n"
+  result = doc.map_sections {|s|
+    context = s.context
+    doctype = s.document.doctype
+    level = s.level
+    kind = case level
+    when 0
+      'kind:h1'
+    when 1
+      'kind:h2'
+    when 2
+      'kind:h3'
+    when 3
+      'kind:h4'
+    else
+      next
+    end
+    lead = level == 0 ? '#' : ['.'] * level * ' '
+    title = sanitize(context == :document ? s.doctitle : s.title)
+    child = s
+    parent_title = nil
+    # NOTE special handling for multi-part book
+    while ((parent = child.parent) != nil && (doctype != 'book' || parent.context != :document))
+      ptitle = sanitize(parent.context == :document ? parent.doctitle : parent.title)
+      parent_title = parent_title == nil ? ptitle : %(#{ptitle}.#{parent_title})
+      child = parent
+    end
+    parent_title = %(parent:#{parent_title}) unless parent_title.nil?
+    [
+      title,
+      s.pos[:file],
+      %(#{lineno = s.pos[:lineno]};"),
+      kind,
+      %(line:#{lineno}),
+      'language:asciidoc',
+      parent_title
+    ].compact * "\t"
+  }.compact * "\n"
+  warn result if DEBUG
+  puts result
+else
+  cmd = ARGV.dup
+  cmd.unshift '/usr/bin/ctags'
+  warn cmd * ' ' if DEBUG
+  puts %x(#{cmd * ' '})
+end
+exit 0
