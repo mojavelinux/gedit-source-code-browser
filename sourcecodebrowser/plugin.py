@@ -187,7 +187,7 @@ class SourceTree(Gtk.VBox):
                 tag.fields['level'] = tag.fields['parent'].count('<<') + 1
                 tag_class_table[('%s<<%s' % (tag.fields['parent'], tag.name))] = tag
 
-        # level 1
+        # levels 1 - 3
         for tag in tags:
             if tag.fields['level'] == 1:
                 pixbuf = self.get_pixbuf(tag.kind.icon_name())
@@ -202,9 +202,7 @@ class SourceTree(Gtk.VBox):
                 node_iter = self._get_tag_iter(p_tag if p_tag else tag, None)
                 new_iter = self._store.append(node_iter, (pixbuf, tag.name, tag.kind.name, tag.file_uri(), tag.fields['line'], markup))
 
-        # level 2
-        for tag in tags:
-            if tag.fields['level'] == 2:
+            elif tag.fields['level'] == 2:
                 pixbuf = self.get_pixbuf(tag.kind.icon_name())
                 if 'line' in tag.fields and self.show_line_numbers:
                     if uri == tag.file_uri():
@@ -224,9 +222,7 @@ class SourceTree(Gtk.VBox):
                     node_iter = self._get_tag_iter(p_tag, gp_tag_iter)
                     new_iter = self._store.append(node_iter, (pixbuf, tag.name, tag.kind.name, tag.file_uri(), tag.fields['line'], markup))
 
-        # level 3
-        for tag in tags:
-            if tag.fields['level'] == 3:
+            elif tag.fields['level'] == 3:
                 pixbuf = self.get_pixbuf(tag.kind.icon_name())
                 if 'line' in tag.fields and self.show_line_numbers:
                     if uri == tag.file_uri():
