@@ -168,10 +168,12 @@ class SourceTree(Gtk.VBox):
 
     def _build_outline(self, kinds, tags, uri):
         tag_class_table = {}
-        # level 0, build symbols table
+        # depth 0, build symbols table
+        # NOTE: depth refers to the nesting level in the treeview, not
+        # necessarily the section level as levels may be skipped
         for tag in tags:
             if 'parent' not in tag.fields:
-                tag.fields['level'] = 0
+                tag.fields['depth'] = 0
                 tag_class_table[tag.name] = tag
                 pixbuf = self.get_pixbuf(tag.kind.icon_name())
                 if 'line' in tag.fields and self.show_line_numbers:
@@ -184,12 +186,12 @@ class SourceTree(Gtk.VBox):
                 node_iter = self._get_tag_iter(tag, None)
                 new_iter = self._store.append(node_iter, (pixbuf, tag.name, tag.kind.name, tag.file_uri(), tag.fields['line'], markup))
             else:
-                tag.fields['level'] = tag.fields['parent'].count('<<') + 1
+                tag.fields['depth'] = tag.fields['parent'].count('<<') + 1
                 tag_class_table[('%s<<%s' % (tag.fields['parent'], tag.name))] = tag
 
-        # levels 1 - 3
+        # depths 1 - 3
         for tag in tags:
-            if tag.fields['level'] == 1:
+            if tag.fields['depth'] == 1:
                 pixbuf = self.get_pixbuf(tag.kind.icon_name())
                 if 'line' in tag.fields and self.show_line_numbers:
                     if uri == tag.file_uri():
@@ -202,7 +204,7 @@ class SourceTree(Gtk.VBox):
                 node_iter = self._get_tag_iter(p_tag if p_tag else tag, None)
                 new_iter = self._store.append(node_iter, (pixbuf, tag.name, tag.kind.name, tag.file_uri(), tag.fields['line'], markup))
 
-            elif tag.fields['level'] == 2:
+            elif tag.fields['depth'] == 2:
                 pixbuf = self.get_pixbuf(tag.kind.icon_name())
                 if 'line' in tag.fields and self.show_line_numbers:
                     if uri == tag.file_uri():
@@ -222,7 +224,7 @@ class SourceTree(Gtk.VBox):
                     node_iter = self._get_tag_iter(p_tag, gp_tag_iter)
                     new_iter = self._store.append(node_iter, (pixbuf, tag.name, tag.kind.name, tag.file_uri(), tag.fields['line'], markup))
 
-            elif tag.fields['level'] == 3:
+            elif tag.fields['depth'] == 3:
                 pixbuf = self.get_pixbuf(tag.kind.icon_name())
                 if 'line' in tag.fields and self.show_line_numbers:
                     if uri == tag.file_uri():
@@ -529,7 +531,7 @@ class SourceCodeBrowserPlugin(GObject.Object, Gedit.WindowActivatable, PeasGtk.C
                             path = '%s' % (i)
                             self._sourcetree._treeview.get_selection().select_path(path)
                             break
-                        # FIXME need to do recursion to cover all levels!!!
+                        # FIXME need to do recursion to cover all depths!!!
                         child_tag_iter = store.iter_children(tag_iter)
                         j = 0
                         while child_tag_iter:
