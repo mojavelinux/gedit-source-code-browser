@@ -1,3 +1,1 @@
-import plugin
-from plugin import SourceCodeBrowserPlugin
-
+from .plugin import SourceCodeBrowserPlugin

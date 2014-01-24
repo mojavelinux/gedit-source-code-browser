@@ -33,7 +33,7 @@ end
 PRG_NAME = File.basename $0
 DEBUG = false
 
-if not File.exist?(source_file = ARGV.last)
+if not File.exist?(source_file = ARGV.last || '')
   warn %(ERROR: #{PRG_NAME}: Source file does not exist: #{source_file})
   exit 1
 elsif source_file =~ /\.(?:ad(?:oc)?|asc(?:iidoc)?)$/
