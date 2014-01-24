@@ -61,8 +61,13 @@ Installation
 Screenshots
 -----------
 
+Python code inside the Source Code Browser:
+
 ![Python code in Source Code Browser](http://www.micahcarrick.com/images/gedit-source-code-browser/python.png)
 
+AsciiDoc outline shown inside the Source Code Browser:
+
+![AsciiDoc outline in Source Code Browser](https://lh4.googleusercontent.com/-972lyzO6xKU/UtUP1CmaJ6I/AAAAAAAAEk4/MASDX4-5DJw/w1192-h655-no/gedit-interactive-asciidoc-outline.png)
 
 Known Issues
 ------------
