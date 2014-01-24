@@ -39,9 +39,9 @@ Installation
 1. Download this repository by clicking the Downloads button at the top of the 
    github page or issue the following command in a terminal:
 
-    git clone git://github.com/Quixotix/gedit-source-code-browser.git
+    git clone -b asciidoc-outline-py2 --recursive git://github.com/mojavelinux/gedit-source-code-browser.git
 
-2. Copy the file `sourcecodebrowser.plugin` and the folder `sourcecodebrowser` to
+2. Copy (or symlink) the file `sourcecodebrowser.plugin` and the folder `sourcecodebrowser` to
    `~/.local/share/gedit/plugins/`.
 
 3. Restart Gedit.
@@ -77,6 +77,14 @@ Known Issues
   such as these 
   [patches for better PHP5 support](http://www.jejik.com/articles/2008/11/patching_exuberant-ctags_for_better_php5_support_in_vim/).
 
+* To use the AsciiDoc outline support, you need to have Ruby installed on your
+  system.  No other RubyGems are required. The AsciiDoc support currently
+  depends on an integration branch of Asciidoctor. If you clone using the +-b
+  asciidoc-outline-py2 --recursive+ options, as shown above, the integration
+  build of Asciidoctor will automatically be checked out into the
+  sourcecodebrowser/data/asciidoctor folder. If you are using a newer version
+  of Gnome 3 that's configured to use Python 3, use the +asciidoc-outline-py3+
+  branch instead.
 
 License
 -------
