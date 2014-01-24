@@ -58,6 +58,36 @@ Installation
     
     glib-compile-schemas /usr/share/glib-2.0/schemas/
 
+Fedora 20 Installation
+----------------------
+
+Below are the specific steps to setup the Gedit source browser plugin on a fresh install of Fedora 20.
+
+1. Install the following packages:
+
+    sudo yum install -y git ruby ctags
+
+2. Checkout the plugin source:
+
+    git clone -b asciidoc-outline-py3 --recursive git://github.com/mojavelinux/gedit-source-code-browser.git
+
+3. Make the plugin available to Gedit:
+
+    mkdir -p ~/.local/share/gedit/plugins
+    ln -s `pwd`/gedit-source-code-browser/sourcecodebrowser* ~/.local/share/gedit/plugins/
+
+4. Start Gedit:
+
+    gedit
+
+5. Activate the plugin using the following steps: Click on the _gedit_ menu in the upper-left corner of the Desktop. Select _Preferences_. Select the _Plugins_ tab. Check the box next to the _Source Code Browser_ entry.
+
+6. Open the sidebar by pressing F9.
+
+7. Select the _Source Code_ tab in the sidebar (colored icon with three shapes).
+
+8. Open an AsciiDoc file and enjoy!
+
 Screenshots
 -----------
 
