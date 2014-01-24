@@ -4,7 +4,7 @@ Gedit Source Code Browser
 A source code class and function browser plugin for Gedit 3. 
 
 * Author: Micah Carrick
-* Author: Dan Allen (added AsciiDoc outline support)
+* Author: Dan Allen (added AsciiDoc outline support, migrated code to Python 3)
 
 This plugin will add a new tab to the side pane in the Gedit text editor which
 shows symbols (functions, classes, variables, etc.) for the active document. 
@@ -39,9 +39,9 @@ Installation
 1. Download this repository by clicking the Downloads button at the top of the 
    github page or issue the following command in a terminal:
 
-    git clone git://github.com/Quixotix/gedit-source-code-browser.git
+    git clone -b asciidoc-outline-py3 --recursive git://github.com/mojavelinux/gedit-source-code-browser.git
 
-2. Copy the file `sourcecodebrowser.plugin` and the folder `sourcecodebrowser` to
+2. Copy (or symlink) the file `sourcecodebrowser.plugin` and the folder `sourcecodebrowser` to
    `~/.local/share/gedit/plugins/`.
 
 3. Restart Gedit.
@@ -77,6 +77,10 @@ Known Issues
   such as these 
   [patches for better PHP5 support](http://www.jejik.com/articles/2008/11/patching_exuberant-ctags_for_better_php5_support_in_vim/).
 
+* AsciiDoc support currently depends on an integration branch of Asciidoctor. If
+  you clone using the +-b asciidoc-outline-py3 --recursive+ options, as shown
+  above, the integration build of Asciidoctor will automatically be checked out
+  into the sourcecodebrowser/data/asciidoctor folder.
 
 License
 -------
