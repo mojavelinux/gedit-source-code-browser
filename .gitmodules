@@ -1,0 +1,3 @@
+[submodule "sourcecodebrowser/data/asciidoctor"]
+	path = sourcecodebrowser/data/asciidoctor
+	url = https://github.com/mojavelinux/asciidoctor
