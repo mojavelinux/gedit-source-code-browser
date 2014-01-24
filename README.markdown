@@ -79,11 +79,11 @@ Known Issues
 
 * To use the AsciiDoc outline support, you need to have Ruby installed on your
   system.  No other RubyGems are required. The AsciiDoc support currently
-  depends on an integration branch of Asciidoctor. If you clone using the +-b
-  asciidoc-outline-py2 --recursive+ options, as shown above, the integration
+  depends on an integration branch of Asciidoctor. If you clone using the `-b
+  asciidoc-outline-py2 --recursive` options, as shown above, the integration
   build of Asciidoctor will automatically be checked out into the
   sourcecodebrowser/data/asciidoctor folder. If you are using a newer version
-  of Gnome 3 that's configured to use Python 3, use the +asciidoc-outline-py3+
+  of Gnome 3 that's configured to use Python 3, use the `asciidoc-outline-py3`
   branch instead.
 
 License
