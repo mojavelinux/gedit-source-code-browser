@@ -65,16 +65,24 @@ Below are the specific steps to setup the Gedit source browser plugin on a fresh
 
 1. Install the following packages:
 
-        sudo yum install -y git ruby ctags
+        $ sudo yum install -y git ruby ctags
 
 2. Checkout the plugin source:
 
-        git clone -b asciidoc-outline-py3 --recursive git://github.com/mojavelinux/gedit-source-code-browser.git
+        $ git clone -b asciidoc-outline-py3 --recursive git://github.com/mojavelinux/gedit-source-code-browser.git
+        $ cd gedit-source-code-browser
 
 3. Make the plugin available to Gedit:
 
-        mkdir -p ~/.local/share/gedit/plugins
-        ln -s `pwd`/gedit-source-code-browser/sourcecodebrowser* ~/.local/share/gedit/plugins/
+        $ mkdir -p ~/.local/share/gedit/plugins
+        $ ln -s `pwd`/sourcecodebrowser ~/.local/share/gedit/plugins/
+        $ ln -s `pwd`/sourcecodebrowser.plugin ~/.local/share/gedit/plugins/
+
+   Here's how the links should appear in the plugins directory:
+
+        $ ls -l ~/.local/share/gedit/plugins/
+        # sourcecodebrowser -> /path/to/gedit-source-code-browser/sourcecodebrowser
+        # sourcecodebrowser.plugin -> /path/to/gedit-source-code-browser/sourcecodebrowser.plugin
 
 4. Start Gedit:
 
